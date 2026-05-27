@@ -110,6 +110,9 @@ No Windows, o comando `fc /b` informa quando nao ha diferencas entre os arquivos
 
 Os resultados dos testes devem ser registrados comparando o tamanho do arquivo original com o tamanho do arquivo `.huff` gerado.
 
+Os resultados dos testes com os arquivos da pasta `arquivos/entrada` estao em
+[`RESULTADOS.md`](RESULTADOS.md).
+
 Formula usada:
 
 ```text
