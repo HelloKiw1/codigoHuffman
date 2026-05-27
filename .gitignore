@@ -1,0 +1,20 @@
+# Compilacao em C
+*.o
+*.obj
+*.exe
+*.out
+huffman
+huffman.exe
+
+# Arquivos gerados pela execucao/testes
+*.huff
+*_restaurado.txt
+arquivos/saida/
+arquivos/restaurados/
+arquivos/restaurados/
+
+# Sistema operacional e editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
