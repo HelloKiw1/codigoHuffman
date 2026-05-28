@@ -117,7 +117,139 @@ void preencher_tabela_frequencia(unsigned char *texto, unsigned int tab[], long 
         tab[texto[i]]++;
 }
 
+/*Inicio da impressao do relatorio*/
 
+void formatar_caracter(unsigned char c, char *destino, int tamanho){
+
+    if(c == '\n')
+        snprintf(destino, tamanho, "\\n");
+
+    else if(c == '\r')
+        snprintf(destino, tamanho, "\\r");
+
+    else if(c == '\t')
+        snprintf(destino, tamanho, "\\t");
+
+    else if(c == ' ')
+        snprintf(destino, tamanho, "espaco");
+
+    else if(c >= 33 && c <= 126)
+        snprintf(destino, tamanho, "%c", c);
+
+    else
+        snprintf(destino, tamanho, "0x%02X", c);
+}
+
+char* obter_nome_arquivo(char *caminho){
+
+    char *barra_normal = strrchr(caminho, '/');
+    char *barra_windows = strrchr(caminho, '\\');
+    char *ultima_barra = barra_normal;
+
+    if(barra_windows && (!ultima_barra || barra_windows > ultima_barra))
+        ultima_barra = barra_windows;
+
+    if(ultima_barra)
+        return ultima_barra + 1;
+
+    return caminho;
+}
+
+void imprimir_linha_tabela(void){
+
+    printf("+-----+------------+-------+------------+------------+\n");
+}
+
+void imprimir_top_frequencias(unsigned int tabela[], long total){
+
+    int usados[TAM] = {0};
+    int posicao, i, melhor;
+    char nome[20];
+
+    printf("\n7 caracteres mais frequentes\n");
+    imprimir_linha_tabela();
+    printf("| Pos | Caracter   | Byte  | Frequencia | Percentual |\n");
+    imprimir_linha_tabela();
+
+    for(posicao = 1; posicao <= 7; posicao++){
+
+        melhor = -1;
+
+        for(i = 0; i < TAM; i++){
+
+            if(!usados[i] && tabela[i] > 0 &&
+               (melhor == -1 || tabela[i] > tabela[melhor])){
+
+                melhor = i;
+            }
+        }
+
+        if(melhor == -1)
+            break;
+
+        usados[melhor] = 1;
+        formatar_caracter((unsigned char)melhor, nome, sizeof(nome));
+
+        printf("| %3d | %-10s | %5d | %10u | %9.2f%% |\n",
+               posicao,
+               nome,
+               melhor,
+               tabela[melhor],
+               total > 0 ? (tabela[melhor] * 100.0) / total : 0.0);
+    }
+
+    imprimir_linha_tabela();
+}
+
+void imprimir_relatorio_compactacao(
+    char *entrada,
+    char *saida,
+    unsigned int tabela[],
+    long tamanho_original,
+    long tamanho_compactado,
+    long bits_codificados,
+    int altura_arvore,
+    int lixo){
+
+    int i, caracteres_distintos = 0;
+    double compactacao = 0.0;
+    char *nome_entrada = obter_nome_arquivo(entrada);
+    char *nome_saida = obter_nome_arquivo(saida);
+
+    for(i = 0; i < TAM; i++){
+
+        if(tabela[i] > 0)
+            caracteres_distintos++;
+    }
+
+    if(tamanho_original > 0){
+
+        compactacao =
+            (1.0 - ((double)tamanho_compactado / tamanho_original)) * 100.0;
+    }
+
+    printf("\nDados do sistema da compactacao\n");
+    printf("+---------------------------+-----------------------------------------+\n");
+    printf("| Dado                      | Valor                                   |\n");
+    printf("+---------------------------+-----------------------------------------+\n");
+    printf("| Modo de execucao          | %-39s |\n", "Compactacao");
+    printf("| Arquivo de entrada        | %-39.39s |\n", nome_entrada);
+    printf("| Arquivo compactado        | %-39.39s |\n", nome_saida);
+    printf("| Tamanho original          | %19ld bytes / %8.2f KB |\n",
+           tamanho_original, tamanho_original / 1024.0);
+    printf("| Tamanho compactado        | %19ld bytes / %8.2f KB |\n",
+           tamanho_compactado, tamanho_compactado / 1024.0);
+    printf("| Compactacao               | %38.2f%% |\n", compactacao);
+    printf("| Caracteres distintos      | %39d |\n", caracteres_distintos);
+    printf("| Bits codificados          | %39ld |\n", bits_codificados);
+    printf("| Bits de lixo no final     | %39d |\n", lixo);
+    printf("| Altura da arvore Huffman  | %39d |\n", altura_arvore);
+    printf("+---------------------------+-----------------------------------------+\n");
+
+    imprimir_top_frequencias(tabela, tamanho_original);
+}
+
+/*Fim de impressao do relatorio*/
 
 void preencher_heap(unsigned int tabela[], MinHeap *heap){
 
@@ -501,6 +633,15 @@ criar_dicionario(dicionario, arvore, "",colunas);
 codificado = codificar(dicionario,texto,tam);
 
 compactar(argv[3],codificado, tabela);
+imprimir_relatorio_compactacao(
+    argv[2],
+    argv[3],
+    tabela,
+    tam,
+    descobrir_tamanho(argv[3]),
+    strlen(codificado),
+    colunas - 1,
+    calcular_lixo(codificado));
 printf("\nArquivo compactado com sucesso!\n");}
 
     else if(strcmp(argv[1], "-d") == 0){
